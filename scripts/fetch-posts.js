@@ -14,6 +14,7 @@ try {
 const CMS_URL   = process.env.CMS_URL      ?? 'http://localhost:3000';
 const CMS_EMAIL = process.env.CMS_EMAIL    ?? null;
 const CMS_PASS  = process.env.CMS_PASSWORD ?? null;
+const CMS_GROUP = process.env.CMS_GROUP    || null;
 const POSTS_DIR = '_posts';
 
 rmSync(POSTS_DIR, { recursive: true, force: true });
@@ -154,7 +155,10 @@ async function fetchAllPosts(token) {
   let hasNextPage = true;
 
   while (hasNextPage) {
-    const url = `${CMS_URL}/api/posts?page=${page}&limit=100`;
+    const groupFilter = CMS_GROUP
+      ? `&where[group.name][equals]=${encodeURIComponent(CMS_GROUP)}`
+      : '';
+    const url = `${CMS_URL}/api/posts?page=${page}&limit=100${groupFilter}`;
     const res = await fetch(url, { headers: authHeaders(token) });
     if (!res.ok) throw new Error(`Failed to fetch posts (page ${page}): ${res.status} ${res.statusText}`);
     const data = await res.json();
@@ -208,6 +212,7 @@ async function main() {
     console.log('No credentials provided — fetching as public user.');
   }
 
+  if (CMS_GROUP) console.log(`Filtering to group: ${CMS_GROUP}`);
   console.log(`Fetching posts from ${CMS_URL}...`);
   const [posts, userMap] = await Promise.all([
     fetchAllPosts(token),
