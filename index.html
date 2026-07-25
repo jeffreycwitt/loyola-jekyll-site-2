@@ -2,10 +2,16 @@
 layout: default
 title: Archive
 ---
-<p class="index-header">All Posts</p>
+<section class="welcome">
+  <p class="welcome-eyebrow">FR 365 · Masterworks of French Literature</p>
+  <h1><em>Les Misérables</em></h1>
+  <p>This site collects student writing from FR 365, a course at Loyola University Maryland exploring Victor Hugo's <em>Les Misérables</em>. Students engage the novel through close reading, historical context, and literary analysis. Posts are published throughout the semester as the course unfolds.</p>
+</section>
+
+<p class="index-label">Student Writings</p>
 
 {% if site.posts.size == 0 %}
-  <p class="empty-state">No posts yet.</p>
+  <p class="empty-state">No posts yet — check back soon.</p>
 {% else %}
   <ul class="post-list">
     {% for post in site.posts %}
