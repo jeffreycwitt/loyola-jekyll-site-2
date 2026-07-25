@@ -1,0 +1,12 @@
+{
+  "name": "example-jekyll-from-cms",
+  "version": "1.0.0",
+  "description": "Pre-processing scripts for fetching content from Payload CMS",
+  "scripts": {
+    "fetch": "node scripts/fetch-posts.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "type": "module"
+}

@@ -1,0 +1,16 @@
+title: My Blog
+description: A CMS-driven publication
+baseurl: ""
+url: ""
+markdown: kramdown
+permalink: /:year/:month/:day/:title/
+
+exclude:
+  - _themes/
+  - scripts/
+  - package.json
+  - Gemfile
+  - Gemfile.lock
+  - .ruby-version
+  - .github/
+  - "*.md"

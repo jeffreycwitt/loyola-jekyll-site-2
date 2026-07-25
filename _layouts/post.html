@@ -1,0 +1,22 @@
+---
+layout: default
+---
+<a class="back-link" href="{{ '/' | relative_url }}">
+  <span class="back-arrow" aria-hidden="true"></span>
+  All posts
+</a>
+
+<article>
+  <header class="post-header">
+    <div class="post-eyebrow">
+      <time datetime="{{ page.date | date_to_xmlschema }}">{{ page.date | date: "%B %-d, %Y" }}</time>
+    </div>
+    <h1 class="post-title">{{ page.title }}</h1>
+    {% if page.author %}<p class="post-author">By {{ page.author }}</p>{% endif %}
+    <hr class="post-rule">
+  </header>
+
+  <div class="post-content">
+    {{ content }}
+  </div>
+</article>

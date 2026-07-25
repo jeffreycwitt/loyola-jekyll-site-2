@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% if page.title and page.url != '/' %}{{ page.title }} — {% endif %}{{ site.title }}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=Source+Sans+3:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* ── Tokens ── */
+    :root {
+      --bg:       #FFFFFF;
+      --surface:  #F5F5F5;
+      --text:     #1A1A1A;
+      --muted:    #6B6B6B;
+      --accent:   #9B2335;
+      --border:   #E0E0E0;
+      --ff-serif: 'Lora', Georgia, serif;
+      --ff-sans:  'Source Sans 3', system-ui, -apple-system, sans-serif;
+    }
+    @media (prefers-color-scheme: dark) { :root {
+      --bg:       #161616;
+      --surface:  #222222;
+      --text:     #F0F0F0;
+      --muted:    #9A9A9A;
+      --accent:   #D4637A;
+      --border:   #333333;
+    }}
+    :root[data-theme="light"] {
+      --bg: #FFFFFF; --surface: #F5F5F5; --text: #1A1A1A; --muted: #6B6B6B;
+      --accent: #9B2335; --border: #E0E0E0;
+    }
+    :root[data-theme="dark"] {
+      --bg: #161616; --surface: #222222; --text: #F0F0F0; --muted: #9A9A9A;
+      --accent: #D4637A; --border: #333333;
+    }
+
+    /* ── Base ── */
+    html { font-size: 17px; }
+    body {
+      font-family: var(--ff-sans);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    main { flex: 1; }
+    a { color: inherit; }
+    :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 2px; }
+
+    /* ── Site header ── */
+    .site-header {
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+      height: 3.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .site-title-link { text-decoration: none; }
+    .site-title {
+      font-family: var(--ff-serif);
+      font-size: 1.1rem;
+      font-weight: 400;
+      color: var(--text);
+      letter-spacing: 0.01em;
+    }
+    .site-nav {
+      display: flex;
+      align-items: center;
+      gap: 1.75rem;
+    }
+    .site-nav a {
+      font-size: 0.8rem;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+    .site-nav a:hover { color: var(--accent); }
+    .theme-toggle {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 0.72rem;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 0.2rem 0.6rem;
+      transition: color 0.15s, border-color 0.15s;
+      font-family: var(--ff-sans);
+    }
+    .theme-toggle:hover { color: var(--accent); border-color: var(--accent); }
+
+    /* ── Page wrapper ── */
+    .page-wrap {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 3rem 2rem 5rem;
+    }
+
+    /* ── Index ── */
+    .index-header {
+      font-size: 0.68rem;
+      font-weight: 600;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--muted);
+      padding-bottom: 0.75rem;
+      border-bottom: 2px solid var(--text);
+      margin-bottom: 0;
+    }
+    .post-list { list-style: none; }
+    .post-list li { border-bottom: 1px solid var(--border); }
+    .post-list-link {
+      display: grid;
+      grid-template-columns: 6.5rem 1fr;
+      gap: 2rem;
+      align-items: baseline;
+      padding: 1.25rem 0;
+      text-decoration: none;
+      color: var(--text);
+      transition: color 0.15s;
+    }
+    .post-list-link:hover { color: var(--accent); }
+    .post-list-link:hover .post-list-date { color: var(--accent); }
+    .post-list-date {
+      font-size: 0.76rem;
+      color: var(--muted);
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+      padding-top: 0.15rem;
+      transition: color 0.15s;
+    }
+    .post-list-title {
+      font-family: var(--ff-serif);
+      font-size: 1.2rem;
+      font-weight: 400;
+      line-height: 1.3;
+    }
+    .post-list-author {
+      display: block;
+      font-family: var(--ff-sans);
+      font-size: 0.74rem;
+      color: var(--muted);
+      margin-top: 0.2rem;
+    }
+    .post-list-link:hover .post-list-author { color: var(--accent); }
+    .empty-state {
+      padding: 4rem 0;
+      text-align: center;
+      font-style: italic;
+      color: var(--muted);
+    }
+
+    /* ── Post page ── */
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      text-decoration: none;
+      margin-bottom: 2.5rem;
+      transition: color 0.15s;
+    }
+    .back-link:hover { color: var(--accent); }
+    .back-arrow {
+      display: inline-block;
+      width: 14px; height: 10px;
+      position: relative; flex-shrink: 0;
+    }
+    .back-arrow::before {
+      content: ''; position: absolute; top: 50%; left: 0;
+      width: 100%; height: 1.5px; background: currentColor; transform: translateY(-50%);
+    }
+    .back-arrow::after {
+      content: ''; position: absolute; top: 50%; left: 0;
+      width: 5px; height: 5px;
+      border-left: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor;
+      transform: translateY(-50%) rotate(45deg);
+    }
+    .post-header { margin-bottom: 2.25rem; }
+    .post-eyebrow {
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 0.75rem;
+    }
+    .post-title {
+      font-family: var(--ff-serif);
+      font-size: clamp(1.8rem, 4vw, 2.5rem);
+      font-weight: 400;
+      line-height: 1.2;
+      text-wrap: balance;
+      margin-bottom: 0.75rem;
+    }
+    .post-author {
+      font-size: 0.82rem;
+      color: var(--muted);
+      margin-bottom: 1.25rem;
+    }
+    .post-rule { height: 1px; background: var(--border); border: none; margin: 0; }
+
+    /* ── Post content ── */
+    .post-content { font-size: 1rem; }
+    .post-content p { line-height: 1.8; margin-bottom: 1.5rem; }
+    .post-content p:last-child { margin-bottom: 0; }
+    .post-content h1, .post-content h2,
+    .post-content h3, .post-content h4 {
+      font-family: var(--ff-serif);
+      font-weight: 600;
+      line-height: 1.25;
+      text-wrap: balance;
+      margin-top: 2.5rem;
+      margin-bottom: 0.75rem;
+    }
+    .post-content h2 { font-size: 1.65rem; }
+    .post-content h3 { font-size: 1.3rem; }
+    .post-content h4 { font-size: 1.05rem; }
+    .post-content a { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px; }
+    .post-content a:hover { text-decoration-thickness: 2px; }
+    .post-content strong { font-weight: 600; }
+    .post-content em { font-style: italic; }
+    .post-content s { text-decoration: line-through; }
+    .post-content code {
+      font-size: 0.87em;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      padding: 0.1em 0.38em;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+    }
+    .post-content ul, .post-content ol { padding-left: 1.4rem; margin-bottom: 1.5rem; }
+    .post-content li { line-height: 1.75; margin-bottom: 0.3rem; }
+    .post-content img {
+      max-width: 100%;
+      height: auto;
+      margin: 1.75rem 0;
+      display: block;
+      border: 1px solid var(--border);
+    }
+    .video-embed {
+      position: relative; padding-bottom: 56.25%; height: 0;
+      overflow: hidden; margin: 2rem 0; background: var(--surface);
+      border: 1px solid var(--border);
+    }
+    .video-embed iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: none; }
+
+    /* ── Footer ── */
+    .site-footer {
+      border-top: 1px solid var(--border);
+      padding: 1.25rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.72rem;
+      color: var(--muted);
+    }
+    .site-footer a { color: var(--muted); text-decoration: none; }
+    .site-footer a:hover { color: var(--accent); }
+    .site-footer-right { letter-spacing: 0.04em; }
+
+    @media (max-width: 560px) {
+      .site-header { padding: 0 1.25rem; }
+      .page-wrap { padding: 2rem 1.25rem 4rem; }
+      .post-list-link { grid-template-columns: 1fr; gap: 0.25rem; }
+      .site-footer { flex-direction: column; gap: 0.5rem; text-align: center; }
+    }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; } }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <a class="site-title-link" href="{{ '/' | relative_url }}">
+      <span class="site-title">{{ site.title }}</span>
+    </a>
+    <nav class="site-nav" aria-label="Primary">
+      <a href="{{ '/' | relative_url }}">Archive</a>
+      <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme">Dark</button>
+    </nav>
+  </header>
+
+  <main>
+    <div class="page-wrap">
+      {{ content }}
+    </div>
+  </main>
+
+  <script>
+    (function() {
+      var btn = document.getElementById('theme-toggle');
+      var root = document.documentElement;
+      function getStored() { try { return localStorage.getItem('theme'); } catch(e) { return null; } }
+      function setStored(t) { try { localStorage.setItem('theme', t); } catch(e) {} }
+      function apply(theme) {
+        root.setAttribute('data-theme', theme);
+        btn.textContent = theme === 'dark' ? 'Light' : 'Dark';
+        btn.setAttribute('aria-label', theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode');
+      }
+      var stored = getStored();
+      var initial = stored || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+      apply(initial);
+      btn.addEventListener('click', function() {
+        var next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+        apply(next); setStored(next);
+      });
+    })();
+  </script>
+
+  <footer class="site-footer">
+    <span>{{ site.title }}{% if site.description %} &mdash; {{ site.description }}{% endif %}</span>
+    <span class="site-footer-right">Jekyll &amp; <a href="https://payloadcms.com">Payload CMS</a></span>
+  </footer>
+</body>
+</html>

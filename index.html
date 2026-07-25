@@ -1,0 +1,23 @@
+---
+layout: default
+title: Archive
+---
+<p class="index-header">All Posts</p>
+
+{% if site.posts.size == 0 %}
+  <p class="empty-state">No posts yet.</p>
+{% else %}
+  <ul class="post-list">
+    {% for post in site.posts %}
+      <li>
+        <a class="post-list-link" href="{{ post.url | relative_url }}">
+          <span class="post-list-date">{{ post.date | date: "%b %-d, %Y" }}</span>
+          <span class="post-list-title">
+            {{ post.title }}
+            {% if post.author %}<span class="post-list-author">{{ post.author }}</span>{% endif %}
+          </span>
+        </a>
+      </li>
+    {% endfor %}
+  </ul>
+{% endif %}
