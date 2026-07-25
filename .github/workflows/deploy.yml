@@ -16,7 +16,7 @@ jobs:
   build:
     uses: jeffreycwitt/loyola-jekyll-cms-template/.github/workflows/reusable.yml@main
     with:
-      theme: academic
+      theme: FA26_FR365
       group: FA26_FR365
     secrets:
       CMS_URL:      ${{ secrets.CMS_URL }}
