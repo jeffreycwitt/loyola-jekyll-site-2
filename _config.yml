@@ -1,6 +1,6 @@
 title: My Blog
 description: A CMS-driven publication
-baseurl: ""
+baseurl: "/loyola-jekyll-cms-template"
 url: ""
 markdown: kramdown
 permalink: /:year/:month/:day/:title/
