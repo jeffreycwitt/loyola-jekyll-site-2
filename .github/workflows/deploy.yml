@@ -18,7 +18,7 @@ jobs:
     with:
       theme: FA26_FR365
       group: FA26_FR365
-      portfolio: all
+      portfolio: "A History of France"
     secrets:
       CMS_URL:      ${{ secrets.CMS_URL }}
       CMS_EMAIL:    ${{ secrets.CMS_EMAIL }}
