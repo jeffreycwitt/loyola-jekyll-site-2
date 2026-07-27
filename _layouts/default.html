@@ -393,7 +393,7 @@
       <a href="{{ '/' | relative_url }}">Student Writings</a>
       <a href="{{ '/about/' | relative_url }}">About</a>
       <a href="{{ '/tags/' | relative_url }}">Tags</a>
-      <a href="{{ '/portfolios/' | relative_url }}">Portfolios</a>
+      {% unless site.data.portfolio %}<a href="{{ '/portfolios/' | relative_url }}">Portfolios</a>{% endunless %}
       <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme">Dark</button>
     </nav>
   </header>
