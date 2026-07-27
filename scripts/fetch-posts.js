@@ -11,14 +11,18 @@ try {
   }
 } catch {}
 
-const CMS_URL   = process.env.CMS_URL      ?? 'http://localhost:3000';
-const CMS_EMAIL = process.env.CMS_EMAIL    ?? null;
-const CMS_PASS  = process.env.CMS_PASSWORD ?? null;
-const CMS_GROUP = process.env.CMS_GROUP    || null;
+const CMS_URL       = process.env.CMS_URL       ?? 'http://localhost:3000';
+const CMS_EMAIL     = process.env.CMS_EMAIL     ?? null;
+const CMS_PASS      = process.env.CMS_PASSWORD  ?? null;
+const CMS_GROUP     = process.env.CMS_GROUP     || null;
+const CMS_PORTFOLIO = process.env.CMS_PORTFOLIO || null;
 const POSTS_DIR = '_posts';
 
 rmSync(POSTS_DIR, { recursive: true, force: true });
 mkdirSync(POSTS_DIR, { recursive: true });
+mkdirSync('_data', { recursive: true });
+rmSync('_data/portfolio.yml',  { force: true });
+rmSync('_data/portfolios.yml', { force: true });
 
 // --- Auth ---
 
@@ -139,6 +143,35 @@ function lexicalToHtml(node, slugMap = new Map()) {
   }
 }
 
+// --- YAML helpers ---
+
+function yamlStr(s) {
+  return `"${String(s).replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`;
+}
+
+function writePortfolioYaml(portfolio) {
+  const lines = [
+    `id: ${portfolio.id}`,
+    `title: ${yamlStr(portfolio.title)}`,
+  ];
+  if (portfolio.description) lines.push(`description: ${yamlStr(portfolio.description)}`);
+  lines.push('items:');
+  for (const id of portfolio.items) lines.push(`  - ${id}`);
+  writeFileSync('_data/portfolio.yml', lines.join('\n') + '\n', 'utf8');
+}
+
+function writePortfoliosYaml(portfolios) {
+  const lines = [];
+  for (const p of portfolios) {
+    lines.push(`- id: ${p.id}`);
+    lines.push(`  title: ${yamlStr(p.title)}`);
+    lines.push(`  slug: ${yamlStr(p.slug)}`);
+    if (p.description) lines.push(`  description: ${yamlStr(p.description)}`);
+    lines.push(`  items: [${p.items.join(', ')}]`);
+  }
+  writeFileSync('_data/portfolios.yml', lines.join('\n') + '\n', 'utf8');
+}
+
 // --- Fetch ---
 
 async function fetchUserMap(token) {
@@ -155,10 +188,11 @@ async function fetchAllPosts(token) {
   let hasNextPage = true;
 
   while (hasNextPage) {
+    const statusFilter = `&where[_status][equals]=published`;
     const groupFilter = CMS_GROUP
       ? `&where[group.name][equals]=${encodeURIComponent(CMS_GROUP)}`
       : '';
-    const url = `${CMS_URL}/api/posts?page=${page}&limit=100${groupFilter}`;
+    const url = `${CMS_URL}/api/posts?page=${page}&limit=100${statusFilter}${groupFilter}`;
     const res = await fetch(url, { headers: authHeaders(token) });
     if (!res.ok) throw new Error(`Failed to fetch posts (page ${page}): ${res.status} ${res.statusText}`);
     const data = await res.json();
@@ -169,6 +203,37 @@ async function fetchAllPosts(token) {
   }
 
   return posts;
+}
+
+async function fetchPortfolios(token, group) {
+  const groupFilter = group
+    ? `&where[group.name][equals]=${encodeURIComponent(group)}`
+    : '';
+  const res = await fetch(
+    `${CMS_URL}/api/portfolios?limit=100&depth=2${groupFilter}`,
+    { headers: authHeaders(token) },
+  );
+  if (!res.ok) throw new Error(`Failed to fetch portfolios: ${res.status} ${res.statusText}`);
+  const data = await res.json();
+  return data.docs ?? [];
+}
+
+async function fetchPortfolioById(token, idOrTitle) {
+  if (/^\d+$/.test(idOrTitle)) {
+    const res = await fetch(
+      `${CMS_URL}/api/portfolios/${idOrTitle}?depth=2`,
+      { headers: authHeaders(token) },
+    );
+    if (res.ok) return res.json();
+  }
+  const res = await fetch(
+    `${CMS_URL}/api/portfolios?limit=1&depth=2&where[title][equals]=${encodeURIComponent(idOrTitle)}`,
+    { headers: authHeaders(token) },
+  );
+  if (!res.ok) throw new Error(`Failed to find portfolio "${idOrTitle}": ${res.status}`);
+  const data = await res.json();
+  if (!data.docs?.length) throw new Error(`Portfolio not found: "${idOrTitle}"`);
+  return data.docs[0];
 }
 
 // --- File generation ---
@@ -184,6 +249,7 @@ function buildPostFile(post, slugMap, userMap) {
   const authorEmail = authorId != null ? (userMap.get(authorId) ?? null) : null;
 
   const title = post.title.replace(/"/g, '\\"');
+  const tags = (post.tags ?? []).map(t => t.tag).filter(Boolean);
   const frontMatter = [
     '---',
     `layout: post`,
@@ -191,12 +257,30 @@ function buildPostFile(post, slugMap, userMap) {
     `date: ${date}`,
     `cms_id: ${post.id}`,
     authorEmail ? `author: "${authorEmail}"` : null,
+    tags.length ? `tags: [${tags.map(t => `"${t.replace(/"/g, '\\"')}"`).join(', ')}]` : null,
     '---',
   ].filter(Boolean).join('\n');
 
   const body = lexicalToHtml(post.content?.root ?? { type: 'root', children: [] }, slugMap);
 
   return { filename, content: `${frontMatter}\n\n${body}\n` };
+}
+
+// --- Helpers ---
+
+function postsFromPortfolio(portfolio) {
+  return (portfolio.items ?? [])
+    .map(item => (item.post && typeof item.post === 'object' ? item.post : null))
+    .filter(Boolean);
+}
+
+function writePosts(posts, slugMap, userMap) {
+  for (const post of posts) {
+    const { filename, content } = buildPostFile(post, slugMap, userMap);
+    const filepath = join(POSTS_DIR, filename);
+    writeFileSync(filepath, content, 'utf8');
+    console.log(`  wrote ${filepath}`);
+  }
 }
 
 // --- Main ---
@@ -212,24 +296,90 @@ async function main() {
     console.log('No credentials provided — fetching as public user.');
   }
 
-  if (CMS_GROUP) console.log(`Filtering to group: ${CMS_GROUP}`);
-  console.log(`Fetching posts from ${CMS_URL}...`);
-  const [posts, userMap] = await Promise.all([
-    fetchAllPosts(token),
-    fetchUserMap(token),
-  ]);
-  console.log(`Fetched ${posts.length} post(s), ${userMap.size} user(s).`);
+  const userMap = await fetchUserMap(token);
 
-  const slugMap = new Map(posts.map(p => [
-    p.id,
-    { date: formatDate(p.publishedDate ?? p.createdAt), slug: slugify(p.title) },
-  ]));
+  if (CMS_PORTFOLIO === 'all') {
+    // Multi-portfolio mode: aggregate all portfolios filtered by group
+    if (CMS_GROUP) console.log(`Filtering portfolios to group: ${CMS_GROUP}`);
+    console.log('Multi-portfolio mode: fetching portfolios...');
+    const rawPortfolios = await fetchPortfolios(token, CMS_GROUP);
+    console.log(`Fetched ${rawPortfolios.length} portfolio(s).`);
 
-  for (const post of posts) {
-    const { filename, content } = buildPostFile(post, slugMap, userMap);
-    const filepath = join(POSTS_DIR, filename);
-    writeFileSync(filepath, content, 'utf8');
-    console.log(`  wrote ${filepath}`);
+    const portfolioData = [];
+    const postMap = new Map(); // cms_id → post (deduplicates)
+
+    for (const portfolio of rawPortfolios) {
+      const items = postsFromPortfolio(portfolio);
+      const cmsIds = [];
+      for (const post of items) {
+        if (!postMap.has(post.id)) postMap.set(post.id, post);
+        cmsIds.push(post.id);
+      }
+      portfolioData.push({
+        id: portfolio.id,
+        title: portfolio.title ?? '',
+        description: portfolio.description ?? '',
+        slug: slugify(portfolio.title ?? String(portfolio.id)),
+        items: cmsIds,
+      });
+    }
+
+    const posts = [...postMap.values()];
+    console.log(`Total unique posts across portfolios: ${posts.length}`);
+
+    const slugMap = new Map(posts.map(p => [
+      p.id,
+      { date: formatDate(p.publishedDate ?? p.createdAt), slug: slugify(p.title) },
+    ]));
+
+    writePosts(posts, slugMap, userMap);
+    writePortfoliosYaml(portfolioData);
+    console.log(`  wrote _data/portfolios.yml (${portfolioData.length} portfolio(s))`);
+
+  } else if (CMS_PORTFOLIO) {
+    // Single-portfolio mode
+    console.log(`Single-portfolio mode: fetching portfolio "${CMS_PORTFOLIO}"...`);
+    const portfolio = await fetchPortfolioById(token, CMS_PORTFOLIO);
+    console.log(`Found portfolio: "${portfolio.title}"`);
+
+    const allItems = postsFromPortfolio(portfolio);
+    const cmsIds = allItems.map(p => p.id); // keep ordering (including any duplicates)
+
+    // Deduplicate posts for _posts/
+    const seen = new Set();
+    const posts = allItems.filter(p => {
+      if (seen.has(p.id)) return false;
+      seen.add(p.id);
+      return true;
+    });
+
+    const slugMap = new Map(posts.map(p => [
+      p.id,
+      { date: formatDate(p.publishedDate ?? p.createdAt), slug: slugify(p.title) },
+    ]));
+
+    writePosts(posts, slugMap, userMap);
+    writePortfolioYaml({
+      id: portfolio.id,
+      title: portfolio.title ?? '',
+      description: portfolio.description ?? '',
+      items: cmsIds,
+    });
+    console.log('  wrote _data/portfolio.yml');
+
+  } else {
+    // Regular mode: date-sorted posts filtered by group/status
+    if (CMS_GROUP) console.log(`Filtering to group: ${CMS_GROUP}`);
+    console.log(`Fetching posts from ${CMS_URL}...`);
+    const posts = await fetchAllPosts(token);
+    console.log(`Fetched ${posts.length} post(s).`);
+
+    const slugMap = new Map(posts.map(p => [
+      p.id,
+      { date: formatDate(p.publishedDate ?? p.createdAt), slug: slugify(p.title) },
+    ]));
+
+    writePosts(posts, slugMap, userMap);
   }
 
   console.log('Done.');

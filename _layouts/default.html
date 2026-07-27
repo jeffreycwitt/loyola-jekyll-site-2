@@ -299,6 +299,67 @@
     }
     .about-section a { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
 
+    /* ── Tags ── */
+    .post-tags { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 1rem; }
+    .tag {
+      display: inline-block;
+      font-family: var(--ff-serif);
+      font-size: 0.75rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 0.2rem 0.65rem;
+      border: 1px solid var(--border);
+      border-radius: 1px;
+      color: var(--muted);
+      text-decoration: none;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .tag:hover { color: var(--accent); border-color: var(--accent); }
+    .tag-section { margin-bottom: 2.5rem; }
+    .tag-heading {
+      font-family: var(--ff-serif);
+      font-size: 0.82rem;
+      font-style: italic;
+      letter-spacing: 0.06em;
+      color: var(--accent);
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 0;
+    }
+    .post-list-tags { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.3rem; }
+    .tag-chip { font-family: var(--ff-serif); font-style: italic; font-size: 0.78rem; color: var(--muted); }
+    .tag-chip + .tag-chip::before { content: '·'; margin-right: 0.3rem; }
+
+    /* ── Portfolios ── */
+    .portfolio-header {
+      padding-bottom: 2rem;
+      margin-bottom: 2rem;
+      border-bottom: 1px solid var(--border);
+      text-align: center;
+    }
+    .portfolio-title {
+      font-family: var(--ff-serif);
+      font-size: clamp(1.8rem, 4.5vw, 2.75rem);
+      font-weight: 400;
+      line-height: 1.2;
+      text-wrap: balance;
+      margin-bottom: 0.75rem;
+    }
+    .portfolio-description { font-size: 1rem; color: var(--muted); line-height: 1.75; }
+    .portfolio-section { margin-bottom: 3rem; }
+    .portfolio-section-header {
+      padding-bottom: 1rem;
+      margin-bottom: 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .portfolio-section-title {
+      font-family: var(--ff-serif);
+      font-size: 1.35rem;
+      font-weight: 400;
+      letter-spacing: 0.01em;
+      color: var(--text);
+    }
+
     /* ── Footer ── */
     .site-footer {
       border-top: 1px solid var(--border);
@@ -331,6 +392,8 @@
     <nav class="site-nav" aria-label="Primary">
       <a href="{{ '/' | relative_url }}">Student Writings</a>
       <a href="{{ '/about/' | relative_url }}">About</a>
+      <a href="{{ '/tags/' | relative_url }}">Tags</a>
+      <a href="{{ '/portfolios/' | relative_url }}">Portfolios</a>
       <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme">Dark</button>
     </nav>
   </header>
