@@ -131,8 +131,9 @@ function lexicalToHtml(node, slugMap = new Map()) {
         const type = mimeType ?? 'video/mp4';
         return `<video controls><source src="${src}" type="${type}"></video>`;
       }
+      const safeAlt = (alt ?? '').replace(/&/g, '&amp;').replace(/"/g, '&quot;');
       const dims = width && height ? ` width="${width}" height="${height}"` : '';
-      return `<img src="${src}" alt="${alt ?? ''}"${dims}>`;
+      return `<img src="${src}" alt="${safeAlt}"${dims}>`;
     }
 
     case 'block': {
