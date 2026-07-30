@@ -118,9 +118,19 @@ function lexicalToHtml(node, slugMap = new Map()) {
     }
 
     case 'upload': {
-      const { url, alt, width, height } = node.value ?? {};
+      const { url, alt, width, height, mimeType } = node.value ?? {};
       if (!url) return '';
       const src  = url.startsWith('http') ? url : `${CMS_URL}${url}`;
+      const isAudio = mimeType?.startsWith('audio/') || /\.(m4a|mp3|wav|ogg|aac|flac)$/i.test(url);
+      const isVideo = mimeType?.startsWith('video/') || /\.(mp4|webm|ogv|mov)$/i.test(url);
+      if (isAudio) {
+        const type = mimeType ?? (/\.m4a$/i.test(url) ? 'audio/mp4' : 'audio/mpeg');
+        return `<audio controls><source src="${src}" type="${type}"></audio>`;
+      }
+      if (isVideo) {
+        const type = mimeType ?? 'video/mp4';
+        return `<video controls><source src="${src}" type="${type}"></video>`;
+      }
       const dims = width && height ? ` width="${width}" height="${height}"` : '';
       return `<img src="${src}" alt="${alt ?? ''}"${dims}>`;
     }
